@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
 
 
 def base_SIR(S0, I0, R0, beta, gamma, t_max, stepsize):
@@ -119,7 +120,7 @@ def growth_SIR_birth_death(
         else:
             idx_stop = idx
             break
-    
+
     T = T[0:idx_stop]
     S = S[0:idx_stop]
     I = I[0:idx_stop]
@@ -127,6 +128,10 @@ def growth_SIR_birth_death(
     population = population[0:idx_stop]
 
     return S, I, R, T, population
+
+
+def r_func(x, r0):
+    return 1 - np.exp(-r0 * x)
 
 
 def main():
@@ -198,7 +203,7 @@ def main():
 
     # hw sir + b/d
 
-    p_growth__sir_output_path = Path("output/sir_p_growth_sir_fig.pdf")
+    p_growth__sir_output_path = Path("output/hw_fig.pdf")
     # SIR w/ population growth
     S0 = 999
     I0 = 1
@@ -218,7 +223,7 @@ def main():
     plt.plot(T, S, color="b", label="Susceptibles")
     plt.plot(T, I, color="r", label="Infecteds")
     plt.plot(T, R, color="k", label="Recovereds")
-    plt.plot(T, population, color="purple", label="Current Population", linestyle=':')
+    plt.plot(T, population, color="purple", label="Current Population", linestyle=":")
     plt.xlabel("time")
     plt.ylabel("people")
     plt.ylim(0, 1700)
@@ -226,9 +231,61 @@ def main():
     plt.ylim(bottom=0)
     plt.xlim(left=0)
     plt.yticks()
+    plt.title(
+        "Altaf Barelvi: HW1.Q1 Population dynamic of SIR model with population growth"
+    )
     plt.savefig(p_growth__sir_output_path)
-    plt.show()
+    # plt.show()
     plt.close()
+
+    # question 3.b & d
+
+    # plt from class
+    t_max = 10
+    S, I, R, T = base_SIR(999, 1, 0, 1, 0.5, t_max, 0.05)
+    S = S / N
+    I = I / N
+    R = R / N
+
+    # plt.figure(figsize=(10, 8))
+    # plt.plot(T, S, color="b", label="Susceptibles")
+    # plt.plot(T, I, color="r", label="Infecteds")
+    # plt.plot(T, R, color="green", label="Recovereds")
+
+    x = np.linspace(0, t_max, 500)
+    params = [0.9, 1.0, 1.1, 1.2]
+    cumulative_incidence = Path("output/hw3_b.png")
+    fig, axes = plt.subplots(len(params), 1, figsize=(6, 8), sharex=True)
+
+    for ax, p in zip(axes, params):
+        y = r_func(x, p)
+        print(y)
+        intersection = fsolve(lambda r: r_func(r, p) - r, 0.5)[0]
+        ax.plot(x, y, label=f"param={p}", color="red")
+        ax.plot(x, x, label="f(r_inf)", color="black")
+        ax.plot(T, R, color="green", linestyle="--", label="Recovereds")
+        ax.scatter(
+            intersection,
+            r_func(intersection, p),
+            color="blue",
+            s=60,
+            zorder=5,
+            label="intersection",
+        )
+
+        ax.set_ylabel("f(x)")
+        ax.set_title(f"param={p}")
+        ax.legend()
+        ax.grid(True)
+
+    axes[-1].set_xlabel("x")
+    plt.tight_layout()
+    plt.savefig(cumulative_incidence)
+    # plt.show()
+    plt.close()
+
+
+    
 
 
 if __name__ == "__main__":
