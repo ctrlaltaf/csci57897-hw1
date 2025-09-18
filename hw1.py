@@ -28,60 +28,6 @@ def base_SIR(S0, I0, R0, beta, gamma, t_max, stepsize):
     return S, I, R, T
 
 
-def pop_growth_SIR(S0, I0, R0, beta, gamma, t_max, stepsize, N_growth):
-    T = np.arange(0, t_max + stepsize, stepsize)
-    S = np.zeros(len(T))
-    I = np.zeros(len(T))
-    R = np.zeros(len(T))
-    N = S0 + I0 + R0
-
-    for idx, t in enumerate(T):
-        if idx == 0:
-            S[idx] = S0
-            I[idx] = I0
-            R[idx] = R0
-        else:
-            dS_dt = -beta * S[idx - 1] * I[idx - 1] / N
-            dI_dt = beta * S[idx - 1] * I[idx - 1] / N - gamma * I[idx - 1]
-            dR_dt = gamma * I[idx - 1]
-
-            S[idx] = S[idx - 1] + dS_dt * stepsize
-            I[idx] = I[idx - 1] + dI_dt * stepsize
-            R[idx] = R[idx - 1] + dR_dt * stepsize
-
-        N += N_growth
-
-    return S, I, R, T
-
-
-def SIR_birth_death(S0, I0, R0, beta, gamma, mu, t_max, stepsize):
-    T = np.arange(0, t_max + stepsize, stepsize)
-    S = np.zeros(len(T))
-    I = np.zeros(len(T))
-    R = np.zeros(len(T))
-    N = S0 + I0 + R0
-
-    for idx, t in enumerate(T):
-        if idx == 0:
-            S[idx] = S0
-            I[idx] = I0
-            R[idx] = R0
-        else:
-            dS_dt = -beta * S[idx - 1] * I[idx - 1] / N - mu * S[idx - 1] + mu * N
-            dI_dt = (
-                beta * S[idx - 1] * I[idx - 1] / N
-                - gamma * I[idx - 1]
-                - mu * I[idx - 1]
-            )
-            dR_dt = gamma * I[idx - 1] - mu * R[idx - 1]
-
-            S[idx] = S[idx - 1] + dS_dt * stepsize
-            I[idx] = I[idx - 1] + dI_dt * stepsize
-            R[idx] = R[idx - 1] + dR_dt * stepsize
-
-    return S, I, R, T
-
-
 def growth_SIR_birth_death(
     S0, I0, R0, beta, gamma, birth_rate, death_rate, t_max, stepsize, final_population
 ):
@@ -130,81 +76,21 @@ def growth_SIR_birth_death(
     return S, I, R, T, population
 
 
-def r_func(x, r0):
+def r_equation(x, r0):
     return 1 - np.exp(-r0 * x)
+
+
+def final_size_equation(r, r0):  # use this to solve equal to zero
+    return r - (1 - np.exp(-r0 * r))
 
 
 def main():
     print("hw1")
-    base_output_path = Path("output/sir_fig.pdf")
 
-    # plt from class
-    S, I, R, T = base_SIR(999, 1, 0, 1, 0.5, 50, 0.05)
-    plt.figure(figsize=(10, 8))
-    plt.plot(T, S, color="b", label="Susceptibles")
-    plt.plot(T, I, color="r", label="Infecteds")
-    plt.plot(T, R, color="k", label="Recovereds")
-    plt.xlabel("time")
-    plt.ylabel("people")
-    plt.legend()
-    plt.ylim(bottom=0)
-    plt.xlim(left=0)
-    plt.savefig(base_output_path)
-    # plt.show()
-    plt.close()
+    # q1 sir + b/d w/ slow growth
 
-    p_growth_output_path = Path("output/p_growth_sir_fig.pdf")
-    # SIR w/ population growth
-    S, I, R, T = pop_growth_SIR(999, 1, 0, 1, 0.5, 50, 0.05, 2)
-    plt.figure(figsize=(10, 8))
-    plt.plot(T, S, color="b", label="Susceptibles")
-    plt.plot(T, I, color="r", label="Infecteds")
-    plt.plot(T, R, color="k", label="Recovereds")
-    plt.xlabel("time")
-    plt.ylabel("people")
-    plt.legend()
-    plt.ylim(bottom=0)
-    plt.xlim(left=0)
-    plt.savefig(p_growth_output_path)
-    # plt.show()
-    plt.close()
+    p_growth_sir_output_path = Path("output/hw_fig_q1.pdf")
 
-    # sir + b/d
-    sir_bd_output = Path("output/sir_bd.pdf")
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-    beta = 1
-    gamma = 0.5
-    mu = 0.01
-    max_t = 500
-
-    ax = axs[0]
-    S, I, R, T = base_SIR(999, 1, 0, beta, gamma, max_t, 0.05)
-    # ax.plot(T,S, color='b', label='Susceptibles')
-    ax.plot(T, I, color="r", label="Infecteds")
-    # ax.plot(T,R, color='k', label='Recovereds')
-
-    ax = axs[1]
-    S, I, R, T = SIR_birth_death(999, 1, 0, beta, gamma, mu, max_t, 0.05)
-    # ax.plot(T,S, color='b', label='Susceptibles')
-    ax.plot(T, I, color="r", label="Infecteds")
-    # ax.plot(T,R, color='k', label='Recovereds')
-    R0 = beta / (gamma + mu)
-    Seq = 1 / R0 * 1000
-    # ax.plot([0,max_t],[Seq,Seq],'b--')
-
-    for ax in axs:
-        ax.set_xlabel("time")
-        ax.set_ylabel("people")
-        ax.set_ylim(bottom=0)
-        ax.set_xlim(left=0)
-    plt.savefig(sir_bd_output)
-    # plt.show()
-    plt.close()
-
-    # hw sir + b/d
-
-    p_growth__sir_output_path = Path("output/hw_fig.pdf")
-    # SIR w/ population growth
     S0 = 999
     I0 = 1
     R0 = 0
@@ -221,7 +107,7 @@ def main():
     )
     plt.figure(figsize=(10, 8))
     plt.plot(T, S, color="b", label="Susceptibles")
-    plt.plot(T, I, color="r", label="Infecteds")
+    plt.plot(T, I, color="r", label="Infectious")
     plt.plot(T, R, color="k", label="Recovereds")
     plt.plot(T, population, color="purple", label="Current Population", linestyle=":")
     plt.xlabel("time")
@@ -234,52 +120,89 @@ def main():
     plt.title(
         "Altaf Barelvi: HW1.Q1 Population dynamic of SIR model with population growth"
     )
-    plt.savefig(p_growth__sir_output_path)
+    plt.savefig(p_growth_sir_output_path)
     # plt.show()
     plt.close()
 
     # question 3.b & d
 
-    # plt from class
-    t_max = 10
+    t_max = 0.5
+    N = 1000
     S, I, R, T = base_SIR(999, 1, 0, 1, 0.5, t_max, 0.05)
     S = S / N
     I = I / N
     R = R / N
 
-    # plt.figure(figsize=(10, 8))
-    # plt.plot(T, S, color="b", label="Susceptibles")
-    # plt.plot(T, I, color="r", label="Infecteds")
-    # plt.plot(T, R, color="green", label="Recovereds")
-
     x = np.linspace(0, t_max, 500)
     params = [0.9, 1.0, 1.1, 1.2]
-    cumulative_incidence = Path("output/hw3_b.png")
-    fig, axes = plt.subplots(len(params), 1, figsize=(6, 8), sharex=True)
+    cumulative_incidence = Path("output/hw_fig_q3b.png")
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True, sharey=True)
+    axes = axes.flatten()
 
     for ax, p in zip(axes, params):
-        y = r_func(x, p)
-        intersection = fsolve(lambda r: r_func(r, p) - r, 0.5)[0]
+        y = r_equation(x, p)
+        intersection = fsolve(lambda r: r_equation(r, p) - r, 0.5)[0]
+
         ax.plot(x, y, label=f"param={p}", color="red")
         ax.plot(x, x, label="f(r_inf)", color="black")
-        ax.plot(T, R, color="green", linestyle="--", label="Recovereds")
         ax.scatter(
             intersection,
-            r_func(intersection, p),
+            r_equation(intersection, p),
             color="blue",
             s=60,
             zorder=5,
             label="intersection",
         )
 
-        ax.set_ylabel("f(x)")
         ax.set_title(f"param={p}")
-        ax.legend()
+        ax.set_ylabel("f(x)")
         ax.grid(True)
+        ax.legend()
 
-    axes[-1].set_xlabel("x")
+    for ax in axes[2:]:
+        ax.set_xlabel("x")
+
     plt.tight_layout()
     plt.savefig(cumulative_incidence)
+    # plt.show()
+    plt.close()
+
+    # question 3.d
+
+    predicted_epi_size_path = Path("output/hw_fig_q3d")
+    beta = 1
+    gamma = 0.5
+    R0 = beta / gamma
+    r_inf_pred = fsolve(final_size_equation, 0.5, args=(R0,))[0]
+    print("Predicted final epidemic size r_inf:", r_inf_pred)
+
+    t_max = 100
+    step_size = 0.05
+    N = 1000
+
+    S, I, R, T = base_SIR(999, 1, 0, beta, gamma, t_max, step_size)
+    S = S / N
+    I = I / N
+    R = R / N
+
+    plt.figure(figsize=(10, 8))
+    plt.plot(T, S, color="b", label="Susceptibles")
+    plt.plot(T, I, color="r", label="Infectious")
+    plt.plot(T, R, color="g", label="Recovereds")
+
+    plt.axhline(
+        r_inf_pred,
+        color="green",
+        linestyle="--",
+        label=f"r_inf prediction = {r_inf_pred:.3f}",
+    )
+
+    plt.xlabel("time")
+    plt.ylabel("population (proportion)")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(predicted_epi_size_path)
     # plt.show()
     plt.close()
 
@@ -309,11 +232,11 @@ def main():
         if i > y_max_i:
             x_max_i, y_max_i = t, i
 
-    q4_path = Path("output/q4.png")
+    q4_path = Path("output/hw_fig_q4.png")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     ax1.plot(T_1, S_1, color="b", label="Susceptibles")
-    ax1.plot(T_1, I_1, color="r", label="Infecteds")
+    ax1.plot(T_1, I_1, color="r", label="Infectious")
     ax1.plot(T_1, R_1, color="k", label="Recovereds")
     ax1.axvline(
         x=t_herd_threhold_reached,
@@ -330,7 +253,7 @@ def main():
     ax1.grid(True)
 
     ax2.plot(T_2, S_2, color="b", label="Susceptibles")
-    ax2.plot(T_2, I_2, color="r", label="Infecteds")
+    ax2.plot(T_2, I_2, color="r", label="Infectious")
     ax2.plot(T_2, R_2, color="k", label="Recovereds")
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Population (proportion)")
@@ -348,7 +271,8 @@ def main():
 
     plt.tight_layout(rect=[0, 0.05, 1, 1])
     plt.savefig(q4_path, bbox_inches="tight")
-    plt.show()
+    # plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
