@@ -259,7 +259,6 @@ def main():
 
     for ax, p in zip(axes, params):
         y = r_func(x, p)
-        print(y)
         intersection = fsolve(lambda r: r_func(r, p) - r, 0.5)[0]
         ax.plot(x, y, label=f"param={p}", color="red")
         ax.plot(x, x, label="f(r_inf)", color="black")
@@ -284,8 +283,72 @@ def main():
     # plt.show()
     plt.close()
 
+    # question 4
+    N = 10**6
+    s0 = N - 1 / N
+    i0 = 1 / N
+    r0 = 0
+    beta_1, gamma_1, t_max_1 = 1, 0.5, 100
+    beta_2, gamma_2, t_max_2 = 1, 0.8, 500
+    step_size = 0.005
 
-    
+    S_1, I_1, R_1, T_1 = base_SIR(s0, i0, r0, beta_1, gamma_1, t_max_1, step_size)
+    S_1, I_1, R_1 = S_1 / N, I_1 / N, R_1 / N
+
+    S_2, I_2, R_2, T_2 = base_SIR(s0, i0, r0, beta_2, gamma_2, t_max_2, step_size)
+    S_2, I_2, R_2 = S_2 / N, I_2 / N, R_2 / N
+
+    herd_immunity_threshold = gamma_1 / beta_1
+    t_herd_threhold_reached = 0
+    for s, t in zip(S_1, T_1):
+        if s > herd_immunity_threshold:
+            t_herd_threhold_reached = t
+
+    x_max_i, y_max_i = 0, 0
+    for i, t in zip(I_1, T_1):
+        if i > y_max_i:
+            x_max_i, y_max_i = t, i
+
+    q4_path = Path("output/q4.png")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+    ax1.plot(T_1, S_1, color="b", label="Susceptibles")
+    ax1.plot(T_1, I_1, color="r", label="Infecteds")
+    ax1.plot(T_1, R_1, color="k", label="Recovereds")
+    ax1.axvline(
+        x=t_herd_threhold_reached,
+        color="blue",
+        linestyle="--",
+        linewidth=1,
+        label=f"Herd threshold (s={herd_immunity_threshold:.2f})",
+    )
+    ax1.scatter(x_max_i, y_max_i, color="red", s=50, label="Peak of I")
+    ax1.set_xlabel("Time")
+    ax1.set_ylabel("Population (proportion)")
+    ax1.set_title("SIR (β=1, γ=0.5, t_max=100)")
+    ax1.legend()
+    ax1.grid(True)
+
+    ax2.plot(T_2, S_2, color="b", label="Susceptibles")
+    ax2.plot(T_2, I_2, color="r", label="Infecteds")
+    ax2.plot(T_2, R_2, color="k", label="Recovereds")
+    ax2.set_xlabel("Time")
+    ax2.set_ylabel("Population (proportion)")
+    ax2.set_title("SIR (β=1, γ=0.9, t_max=500)")
+    ax2.legend()
+    ax2.grid(True)
+
+    fig.text(
+        0.5,
+        -0.02,
+        "Figure showcasing two SIR simulations with different γ values",
+        ha="center",
+        fontsize=12,
+    )
+
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+    plt.savefig(q4_path, bbox_inches="tight")
+    plt.show()
 
 
 if __name__ == "__main__":
