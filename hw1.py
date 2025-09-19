@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
+import textwrap
 
 
 def base_SIR(S0, I0, R0, beta, gamma, t_max, stepsize):
@@ -89,15 +90,13 @@ def main():
 
     # q1 sir + b/d w/ slow growth
 
-    p_growth_sir_output_path = Path("output/hw_fig_q1.pdf")
-
+    p_growth_sir_output_path = Path("output/hw_fig_q1.png")
     S0 = 999
     I0 = 1
     R0 = 0
     N = 1000
     beta = 1
     gamma = 0.5
-    # mu = 0.01
     birth_rate = 0.01
     death_rate = 0.5 * birth_rate
     max_t = 50000
@@ -110,8 +109,8 @@ def main():
     plt.plot(T, I, color="r", label="Infectious")
     plt.plot(T, R, color="k", label="Recovereds")
     plt.plot(T, population, color="purple", label="Current Population", linestyle=":")
-    plt.xlabel("time")
-    plt.ylabel("people")
+    plt.xlabel("Time")
+    plt.ylabel("People")
     plt.ylim(0, 1700)
     plt.legend()
     plt.ylim(bottom=0)
@@ -120,6 +119,14 @@ def main():
     plt.title(
         "Altaf Barelvi: HW1.Q1 Population dynamic of SIR model with population growth"
     )
+    plt.figtext(
+        0.5,
+        0.04,
+        "The plot shows how the number of susceptible, infectious, and recovered people changes over time given some population growth.",
+        ha="center",
+        fontsize=10,
+    )
+
     plt.savefig(p_growth_sir_output_path)
     # plt.show()
     plt.close()
@@ -139,12 +146,15 @@ def main():
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True, sharey=True)
     axes = axes.flatten()
-
+    print()
+    print("Question 3.b")
     for ax, p in zip(axes, params):
         y = r_equation(x, p)
         intersection = fsolve(lambda r: r_equation(r, p) - r, 0.5)[0]
-
-        ax.plot(x, y, label=f"param={p}", color="red")
+        print(
+            f"r_0 = {p} intersection at ({intersection}, {r_equation(intersection, p)})"
+        )
+        ax.plot(x, y, label=f"g(r_inf) w/ param={p}", color="red")
         ax.plot(x, x, label="f(r_inf)", color="black")
         ax.scatter(
             intersection,
@@ -154,21 +164,42 @@ def main():
             zorder=5,
             label="intersection",
         )
-
         ax.set_title(f"param={p}")
-        ax.set_ylabel("f(x)")
+        ax.set_ylabel("y")
         ax.grid(True)
         ax.legend()
 
     for ax in axes[2:]:
         ax.set_xlabel("x")
 
+    fig.suptitle(
+        "Altaf Barelvi: HW1.Q3.B Solutions to the Transcendental Equation for Different Parameters",
+        fontsize=14,
+        y=1.02,
+    )
+
+    # Add a caption under the figure
+    figure_caption = (
+        "The figure shows the intersections between f(r_inf) (red) and g(r_inf) (black) "
+        "for various parameter values. Blue circles mark the fixed points r_inf, "
+        "indicating the epidemic's final size for each R0."
+    )
+    wrapped_caption = "\n".join(textwrap.wrap(figure_caption, width=100))
+
+    fig.text(
+        0.5,
+        -0.04,
+        wrapped_caption,
+        ha="center",
+        fontsize=10,
+    )
+
     plt.tight_layout()
-    plt.savefig(cumulative_incidence)
-    # plt.show()
+    plt.savefig(cumulative_incidence, bbox_inches="tight")
     plt.close()
 
-    # question 3.d
+    print()
+    print("Question 3.d")
 
     predicted_epi_size_path = Path("output/hw_fig_q3d")
     beta = 1
@@ -185,6 +216,7 @@ def main():
     S = S / N
     I = I / N
     R = R / N
+    print("final size of the R population proportion : ", R[-1])
 
     plt.figure(figsize=(10, 8))
     plt.plot(T, S, color="b", label="Susceptibles")
@@ -202,75 +234,79 @@ def main():
     plt.ylabel("population (proportion)")
     plt.legend()
     plt.grid(True)
-    plt.savefig(predicted_epi_size_path)
-    # plt.show()
+
+    # Add a global title
+    plt.title(
+        "Altaf Barelvi: HW1.Q3.D SIR Model Dynamics and Predicted Final Epidemic Size",
+        fontsize=14,
+        y=1.02,
+    )
+
+    # Add a caption under the figure
+    figure_caption = (
+        "The simulation shows the evolution of susceptibles (blue), infectious (red), and recovereds (green). "
+        "The dashed line indicates the predicted final epidemic size (0.796), which closely matches the proportion "
+        "of individuals in the recovered class at the end of the outbreak (0.798)."
+    )
+    wrapped_caption = "\n".join(textwrap.wrap(figure_caption, width=100))
+
+    plt.figtext(
+        0.5,
+        -0.02,
+        wrapped_caption,
+        ha="center",
+        fontsize=10,
+    )
+
+    plt.savefig(predicted_epi_size_path, bbox_inches="tight")
     plt.close()
 
     # question 4
-    N = 10**6
-    s0 = N - 1 / N
-    i0 = 1 / N
-    r0 = 0
-    beta_1, gamma_1, t_max_1 = 1, 0.5, 100
-    beta_2, gamma_2, t_max_2 = 1, 0.8, 500
-    step_size = 0.005
-
-    S_1, I_1, R_1, T_1 = base_SIR(s0, i0, r0, beta_1, gamma_1, t_max_1, step_size)
-    S_1, I_1, R_1 = S_1 / N, I_1 / N, R_1 / N
-
-    S_2, I_2, R_2, T_2 = base_SIR(s0, i0, r0, beta_2, gamma_2, t_max_2, step_size)
-    S_2, I_2, R_2 = S_2 / N, I_2 / N, R_2 / N
-
-    herd_immunity_threshold = gamma_1 / beta_1
-    t_herd_threhold_reached = 0
-    for s, t in zip(S_1, T_1):
-        if s > herd_immunity_threshold:
-            t_herd_threhold_reached = t
-
-    x_max_i, y_max_i = 0, 0
-    for i, t in zip(I_1, T_1):
-        if i > y_max_i:
-            x_max_i, y_max_i = t, i
-
     q4_path = Path("output/hw_fig_q4.png")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
-    ax1.plot(T_1, S_1, color="b", label="Susceptibles")
-    ax1.plot(T_1, I_1, color="r", label="Infectious")
-    ax1.plot(T_1, R_1, color="k", label="Recovereds")
-    ax1.axvline(
-        x=t_herd_threhold_reached,
-        color="blue",
-        linestyle="--",
-        linewidth=1,
-        label=f"Herd threshold (s={herd_immunity_threshold:.2f})",
-    )
-    ax1.scatter(x_max_i, y_max_i, color="red", s=50, label="Peak of I")
-    ax1.set_xlabel("Time")
-    ax1.set_ylabel("Population (proportion)")
-    ax1.set_title("SIR (β=1, γ=0.5, t_max=100)")
-    ax1.legend()
-    ax1.grid(True)
+    N = 10**6
+    S0, I0, R00 = N - 1, 1, 0
+    t_max = 200
+    dt = 0.1
 
-    ax2.plot(T_2, S_2, color="b", label="Susceptibles")
-    ax2.plot(T_2, I_2, color="r", label="Infectious")
-    ax2.plot(T_2, R_2, color="k", label="Recovereds")
-    ax2.set_xlabel("Time")
-    ax2.set_ylabel("Population (proportion)")
-    ax2.set_title("SIR (β=1, γ=0.9, t_max=500)")
-    ax2.legend()
-    ax2.grid(True)
+    cases = [
+        ("Sim_1 = Stable (R0 < 1)", 0.5, 1.0),  # R0 = 0.5
+        ("Sim_2 = Threshold (R0 = 1)", 1.0, 1.0),  # R0 = 1
+        ("Sim_3 = Unstable (R0 > 1)", 1.5, 1.0),  # R0 = 1.5
+    ]
 
-    fig.text(
-        0.5,
-        -0.02,
-        "Figure showcasing two SIR simulations with different γ values",
-        ha="center",
-        fontsize=12,
+    figure_caption = (
+        "The figure illustrates the stability of the disease-free equilibrium (DFE) in the SIR model "
+        "under three parameter, using identical initial conditions (N = 10^6, S = N-1, "
+        "I = epsilon = 1/N, R = 0). The infectious proportion i(t) is shown on a logarithmic scale. "
+        "When R0 = beta/gamma < 1 (blue curve, beta=0.5, gamma=1.0), infections decline exponentially to zero without an increase, "
+        "which means that the DFE is stable. At the threshold R0 = 1 (orange curve, beta=1.0, gamma=1.0), "
+        "infections remain constant at their initial condition. Since R0 = 1, the rate of recovery and the infection trasmission rate is equal, which supports the horizontal line. "
+        "When R0 > 1 (green curve, beta=1.5, gamma=1.0), infections initially grow before declining, "
+        "showing that the DFE is unstable. Just like simulation 1, the proportion of the infectious population will eventually reach zero, however since R0 > 1 it became a disease "
+        "endemic equilibrium since the infection was able to grow."
+        "This demonstrates the principle that the DFE is stable "
+        "if s < 1/R0 and unstable otherwise."
     )
 
-    plt.tight_layout(rect=[0, 0.05, 1, 1])
-    plt.savefig(q4_path, bbox_inches="tight")
+    plt.figure(figsize=(10, 8))
+
+    for label, beta, gamma in cases:
+        S, I, R, T = base_SIR(S0, I0, R00, beta, gamma, t_max, dt)
+        plt.plot(T, I / N, label=f"{label} (beta={beta}, gamma={gamma})")
+
+    plt.yscale("log")  # log scale to make plt more visible
+    plt.xlabel("Time")
+    plt.ylabel("Infectious proportion, i(t) [log scale]")
+    plt.title(
+        "Altaf Barelvi: HW1.Q4 Stability of the Disease-Free Equilibrium (N = 10^6, epsilon = 1/N)"
+    )
+    plt.tight_layout(rect=[0, 0.2, 1, 1])
+    wrapped_caption = "\n".join(textwrap.wrap(figure_caption, width=100))
+    plt.figtext(0.5, 0.01, wrapped_caption, ha="center", fontsize=9)
+    plt.legend()
+    plt.grid(True, which="both", linestyle="--", linewidth=0.7)
+    plt.savefig(q4_path)
     # plt.show()
     plt.close()
 
